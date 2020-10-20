@@ -1,0 +1,52 @@
+---
+title: "Machine Learning Project"
+author: "Shrey"
+date: "10/20/2020"
+output: html_document
+---
+## Insert data and libraries
+```{r setup, include=FALSE}
+library(dplyr)
+library(caret)
+library(rpart)
+library(randomForest)
+training<-read.csv("pml-training.csv")
+testing<-read.csv("pml-testing.csv")
+dim(training)
+set.seed(110)
+```
+
+## Manage the data
+
+```{r manage}
+training[training == ""] <- NA
+training[training=="#DIV/0!"] <- NA
+training[training=="<NA>"] <- NA
+
+traindex <- createDataPartition(training$classe,p = 0.7,list = FALSE)
+train <- training[traindex,]
+test <- training[-traindex,]
+```
+Since there are many columns with NA values we remove them from analysis
+
+```{r analysis, echo=FALSE}
+train1 <- train[which(train$new_window == "no"),]
+train1 <- train[!colSums(is.na(train)) > 0]
+```
+## Applying algorithms
+We first try to use random forest algo as it can be used for both classification and regression and doesn't do overfitting
+```{r algo}
+model <-randomForest(classe ~. , data=train1[,-c(1:7)], method="class")
+pred_test1 <- predict(model, test)
+pred_train1 <- predict(model, train)
+
+confusionMatrix(pred_train1, train$classe)
+confusionMatrix(pred_test1, test$classe)
+```
+We see that random Forest algorithm works quite well in this scene,and since providing graphical analysis is tough in this, we will use this algorithm
+
+Now we test our testing data
+```{r test}
+predict(model,testing)
+```
+We get these values
